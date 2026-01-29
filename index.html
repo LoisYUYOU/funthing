@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026年春节放假通知 - 马年大吉</title>
+    <title>2026年春节放假通知 - 马到成功</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap');
@@ -117,7 +117,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* 音乐控制旋钮 */
+        /* 音乐控制按钮 */
         #music-toggle {
             position: fixed;
             bottom: 30px;
@@ -160,7 +160,7 @@
             </svg>
         </div>
         <h2 class="text-4xl font-black text-yellow-400 tracking-[0.4em] mb-4">好运来</h2>
-        <p class="text-yellow-600 text-lg">点击开启 2026 新春惊喜</p>
+        <p class="text-yellow-600 text-lg text-center px-4">点击开启 2026 马年惊喜</p>
     </div>
 
     <!-- 对联与横幅 -->
@@ -185,8 +185,8 @@
             <div class="space-y-8">
                 <section>
                     <p class="text-xl font-bold border-b border-yellow-500/40 pb-2 mb-4">尊敬的各位同事：</p>
-                    <p class="leading-relaxed opacity-95">
-                        灵蛇辞岁，骏马迎春，在 2026 年春节佳节即将来临之际，结合公司实际，现将放假安排通知如下：
+                    <p class="leading-relaxed opacity-95 text-base">
+                        灵蛇辞岁，骏马迎春。在 2026 年春节佳节即将来临之际，结合公司实际，现将放假安排通知如下：
                     </p>
                 </section>
 
@@ -217,7 +217,7 @@
                     <div class="pl-6 border-l-4 border-yellow-500 space-y-4">
                         <div>
                             <p class="text-xl font-bold text-white">2月5日 (星期四)</p>
-                            <p class="text-yellow-100 opacity-80 mt-1 italic">年度战略复盘会议 · 全员参与</p>
+                            <p class="text-yellow-100 opacity-80 mt-1 italic text-sm">年度战略复盘会议 · 全员参与</p>
                         </div>
                         <div class="bg-yellow-500/10 p-4 rounded-xl">
                             <p class="text-lg font-bold text-yellow-300">🎉 新春团建晚宴</p>
@@ -230,28 +230,69 @@
                 <section class="opacity-80 text-sm italic py-4 border-t border-white/10">
                     <p class="font-bold mb-2">💡 温馨提示：</p>
                     <p>1. 离位前请务必确认断水断电，锁好门窗；</p>
-                    <p>2. 假期期间请保持手机畅通，注意出行安全；</p>
+                    <p>2. 假期期间请保持手机畅通，注意出行安全。</p>
                 </section>
 
                 <footer class="text-center pt-10">
                     <p class="text-3xl font-black text-yellow-400 tracking-widest animate-pulse">
                         祝大家：新春大吉，好运常在！
                     </p>
-                    <p class="mt-8 text-xs opacity-50 tracking-tighter text-yellow-100">崔某 敬启 | 2026.01.29</p>
+                    <p class="mt-8 text-xs opacity-50 tracking-tighter text-yellow-100 font-bold">崔某 敬启 | 2026.01.29</p>
                 </footer>
             </div>
         </div>
     </main>
 
-    <!-- 音乐资源：好运来 -->
-    <audio id="bg-audio" loop>
-        <source src="https://api.p6p.cn/api/audio/haoyunlai.mp3" type="audio/mpeg">
-    </audio>
-
     <script>
         const canvas = document.getElementById('fireworks-canvas');
         const ctx = canvas.getContext('2d');
-        const audio = document.getElementById('bg-audio');
+        
+        // --- 音频资源配置 ---
+        // 优先使用您上传的文件名，请确保该文件已上传至仓库根目录
+        const audioSources = [
+            '1286589960.mp3', 
+            'https://api.p6p.cn/api/audio/haoyunlai.mp3', // 保底源
+            'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Tours/Enthusiast/Tours_-_01_-_Enthusiast.mp3'
+        ];
+        
+        let currentSourceIndex = 0;
+        const bgAudio = new Audio();
+        bgAudio.loop = true;
+
+        // 绑定错误处理逻辑，自动切换备用音源
+        bgAudio.addEventListener('error', () => {
+            console.warn(`音源 ${currentSourceIndex} 失败，切换下一个...`);
+            currentSourceIndex++;
+            if (currentSourceIndex < audioSources.length) {
+                setTimeout(loadAndPlayAudio, 100);
+            }
+        });
+
+        function loadAndPlayAudio() {
+            if (currentSourceIndex >= audioSources.length) return;
+            bgAudio.src = audioSources[currentSourceIndex];
+            const playPromise = bgAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    document.getElementById('music-toggle').style.animationPlayState = 'running';
+                }).catch(err => {
+                    console.warn("播放受限，等待用户交互:", err);
+                });
+            }
+        }
+
+        function toggleAudio() {
+            if (bgAudio.paused) {
+                bgAudio.play().then(() => {
+                    document.getElementById('music-toggle').style.animationPlayState = 'running';
+                });
+            } else {
+                bgAudio.pause();
+                document.getElementById('music-toggle').style.animationPlayState = 'paused';
+            }
+        }
+
+        // --- 烟花引擎逻辑 ---
         let width, height, particles = [], fireworks = [], started = false;
 
         function resize() {
@@ -261,7 +302,6 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // 烟花逻辑类
         class Particle {
             constructor(x, y, color) {
                 this.x = x; this.y = y; this.color = color;
@@ -304,38 +344,23 @@
             requestAnimationFrame(animate);
         }
 
-        function toggleAudio() {
-            if (audio.paused) { audio.play(); document.getElementById('music-toggle').style.animationPlayState = 'running'; }
-            else { audio.pause(); document.getElementById('music-toggle').style.animationPlayState = 'paused'; }
-        }
-
-        // 核心展示逻辑
+        // --- 交互仪式开启 ---
         function launchFestival() {
             if (started) return;
             started = true;
-
-            // 1. 播放音乐
-            audio.play().catch(() => console.log("等待交互播放"));
+            loadAndPlayAudio();
             document.getElementById('music-toggle').style.display = 'flex';
-
-            // 2. 隐藏覆盖层
             const overlay = document.getElementById('click-overlay');
             overlay.style.opacity = '0';
             setTimeout(() => overlay.style.display = 'none', 1200);
-
-            // 3. 启动烟花
             animate();
-
-            // 4. 触发视觉序列动画
             setTimeout(() => {
                 document.getElementById('c-left').classList.add('active');
                 document.getElementById('c-right').classList.add('active');
             }, 600);
-
             setTimeout(() => {
                 document.getElementById('banner').classList.add('active');
             }, 1400);
-
             setTimeout(() => {
                 document.getElementById('notice').classList.add('active');
             }, 2600);

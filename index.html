@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026年春节放假通知 - 动态音乐版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background-color: #000;
+            margin: 0;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        #fireworks-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 引导点击层 */
+        #click-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: radial-gradient(circle, #440000 0%, #000 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: opacity 1s ease-out;
+        }
+
+        /* 对联样式优化 */
+        .couplet {
+            position: fixed;
+            top: 15%;
+            width: 50px;
+            background: #c41e3a;
+            border: 2px solid #d4af37;
+            color: #d4af37;
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            font-size: 24px;
+            font-weight: 900;
+            padding: 15px 5px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 50;
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .couplet::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            margin: 3px;
+            pointer-events: none;
+        }
+        .couplet.active { transform: scaleY(1); }
+        .couplet-left { left: 3%; }
+        .couplet-right { right: 3%; }
+
+        /* 横幅样式 */
+        .banner {
+            position: fixed;
+            top: 3%;
+            left: 50%;
+            transform: translateX(-50%) scaleX(0);
+            width: 240px;
+            background: #c41e3a;
+            border: 2px solid #d4af37;
+            color: #d4af37;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 900;
+            padding: 8px;
+            z-index: 60;
+            transform-origin: center;
+            transition: transform 1s ease-out 0.5s;
+        }
+        .banner.active { transform: translateX(-50%) scaleX(1); }
+
+        /* 通知卡片浮现 */
+        .notice-container {
+            position: relative;
+            z-index: 40;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s ease-out 1.5s;
+            max-width: 90%;
+            width: 550px;
+        }
+        .notice-container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .festive-card {
+            background: rgba(145, 22, 42, 0.88);
+            backdrop-filter: blur(10px);
+            border: 3px solid #d4af37;
+            border-radius: 1rem;
+            box-shadow: 0 0 50px rgba(212, 175, 55, 0.25);
+        }
+
+        /* 移动端适配：缩小对联而非隐藏 */
+        @media (max-width: 768px) {
+            .couplet {
+                width: 35px;
+                font-size: 16px;
+                padding: 10px 2px;
+                top: 20%;
+            }
+            .banner {
+                width: 180px;
+                font-size: 18px;
+            }
+            .notice-container { width: 95%; }
+        }
+
+        /* 隐藏滚动条 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 音乐控制按钮 */
+        #music-control {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 110;
+            background: rgba(212, 175, 55, 0.8);
+            color: #c41e3a;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            animation: rotate 3s linear infinite;
+        }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <!-- 烟花画布 -->
+    <canvas id="fireworks-canvas"></canvas>
+
+    <!-- 点击引导 -->
+    <div id="click-overlay" onclick="startPresentation()">
+        <div class="mb-8 text-yellow-500 animate-bounce">
+            <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5L7.5 12h3V8h3v4h3L12 16.5z"/></svg>
+        </div>
+        <h2 class="text-3xl font-bold text-yellow-400 tracking-widest text-center px-4">点 击 开 启<br>2026 新 春 惊 喜</h2>
+        <p class="mt-4 text-yellow-600 opacity-80">祝您在新的一年万事如意</p>
+    </div>
+
+    <!-- 装饰对联 -->
+    <div class="couplet couplet-left" id="couplet-left">龙腾盛世迎新岁</div>
+    <div class="couplet couplet-right" id="couplet-right">凤舞神州贺春节</div>
+    
+    <!-- 装饰横幅 -->
+    <div class="banner" id="banner-top">万 象 更 新</div>
+
+    <!-- 音乐开关 -->
+    <div id="music-control" onclick="toggleMusic()">🎵</div>
+
+    <!-- 放假通知主体 -->
+    <main class="notice-container no-scrollbar overflow-y-auto max-h-[80vh]" id="notice-main">
+        <div class="festive-card p-6 sm:p-10">
+            <header class="text-center mb-6">
+                <h1 class="text-3xl sm:text-5xl font-black text-yellow-400 drop-shadow-md mb-2">2026春节放假通知</h1>
+                <div class="h-1 w-20 bg-yellow-500 mx-auto rounded-full"></div>
+            </header>
+
+            <div class="space-y-6 text-sm sm:text-base leading-relaxed">
+                <p class="text-xl font-bold border-b border-yellow-500/30 pb-2">尊敬的各位同事：</p>
+                <p class="opacity-90">伴随着龙年的钟声，我们即将迎来中华民族最隆重的传统节日。现将2026年春节放假安排通知如下：</p>
+
+                <div class="bg-black/30 p-5 rounded-lg border border-yellow-600/40">
+                    <h3 class="text-yellow-400 font-bold mb-3 flex items-center text-lg">
+                        <span class="mr-2">🧧</span> 一、放假与复工时间
+                    </h3>
+                    <div class="space-y-2">
+                        <p class="flex justify-between"><span>放假时间：</span><span class="text-white font-bold text-right">2月7日(五) - 2月23日(一)</span></p>
+                        <p class="flex justify-between"><span>假期总计：</span><span class="text-yellow-200 text-right">17 天连休</span></p>
+                        <p class="flex justify-between border-t border-white/10 pt-2 mt-2 font-bold"><span>正式复工：</span><span class="text-yellow-400 text-right">2月24日(星期二)</span></p>
+                    </div>
+                </div>
+
+                <div class="border-l-4 border-yellow-500 pl-4 bg-yellow-900/10 p-4 rounded-r-lg">
+                    <h3 class="text-yellow-400 font-bold mb-2">二、节前特别提醒</h3>
+                    <p class="text-yellow-100 font-bold">2月5日 (星期四)</p>
+                    <p class="opacity-90">● 全天：年度战略复盘会议</p>
+                    <p class="opacity-90 mt-1">● 晚间：新春团建聚餐 (负责人：炮炮)</p>
+                </div>
+
+                <div class="bg-red-900/20 p-4 rounded-lg text-xs space-y-2 opacity-80 border border-white/5">
+                    <p class="font-bold text-yellow-300">三、温馨提示：</p>
+                    <p>1. 离位前请务必确认断水断电，锁好门窗，做好安全检查。</p>
+                    <p>2. 假期期间请保持手机畅通，注意出行安全与财产安全。</p>
+                </div>
+
+                <footer class="text-center pt-8 border-t border-white/10">
+                    <p class="text-2xl font-bold text-yellow-400 mb-2 italic">恭祝大家：</p>
+                    <p class="text-3xl font-black tracking-widest text-white drop-shadow-lg">
+                        阖家欢乐 · 万事顺遂
+                    </p>
+                </footer>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('fireworks-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [], fireworks = [], animationStarted = false;
+        
+        // 使用公共节庆音乐 URL (欢快民乐)
+        const bgMusic = new Audio('https://actions.google.com/sounds/v1/science_fiction/strobe_pulse.ogg'); // 示例用，建议替换为真实的春节MP3链接
+        // 尝试一个更具节日气氛的链接（如果是正式环境，请确保链接有效）
+        bgMusic.src = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'; // 临时背景乐
+        bgMusic.loop = true;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // 烟花类逻辑
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                this.velocity = { x: (Math.random() - 0.5) * 10, y: (Math.random() - 0.5) * 10 };
+                this.alpha = 1; this.friction = 0.95; this.gravity = 0.15;
+            }
+            draw() {
+                ctx.save(); ctx.globalAlpha = this.alpha; ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = this.color; ctx.fill(); ctx.restore();
+            }
+            update() {
+                this.velocity.x *= this.friction; this.velocity.y *= this.friction;
+                this.velocity.y += this.gravity; this.x += this.velocity.x;
+                this.y += this.velocity.y; this.alpha -= 0.012;
+            }
+        }
+
+        class Firework {
+            constructor() {
+                this.x = Math.random() * width; this.y = height;
+                this.targetY = Math.random() * (height * 0.45);
+                this.color = `hsl(${Math.random() * 360}, 100%, 65%)`;
+                this.velocity = { x: (Math.random() - 0.5) * 2, y: -14 - Math.random() * 6 };
+                this.exploded = false;
+            }
+            draw() { if (!this.exploded) { ctx.beginPath(); ctx.arc(this.x, this.y, 3, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); } }
+            update() { this.x += this.velocity.x; this.y += this.velocity.y; if (this.y <= this.targetY) { this.exploded = true; this.explode(); } }
+            explode() { for (let i = 0; i < 70; i++) particles.push(new Particle(this.x, this.y, this.color)); }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+            ctx.fillRect(0, 0, width, height);
+            if (Math.random() < 0.1) fireworks.push(new Firework());
+            fireworks = fireworks.filter(f => !f.exploded);
+            fireworks.forEach(f => { f.update(); f.draw(); });
+            particles = particles.filter(p => p.alpha > 0);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+
+        function toggleMusic() {
+            if (bgMusic.paused) {
+                bgMusic.play();
+                document.getElementById('music-control').style.animationPlayState = 'running';
+            } else {
+                bgMusic.pause();
+                document.getElementById('music-control').style.animationPlayState = 'paused';
+            }
+        }
+
+        function startPresentation() {
+            if (animationStarted) return;
+            animationStarted = true;
+
+            // 1. 播放音乐 (浏览器要求必须有用户交互才能播放)
+            bgMusic.play().catch(e => console.log("Audio play failed, waiting for user interaction"));
+            document.getElementById('music-control').style.display = 'flex';
+
+            // 2. 隐藏遮罩
+            const overlay = document.getElementById('click-overlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 1000);
+
+            // 3. 启动动画
+            animate();
+
+            // 4. 触发视觉序列
+            setTimeout(() => {
+                document.getElementById('couplet-left').classList.add('active');
+                document.getElementById('couplet-right').classList.add('active');
+            }, 600);
+
+            setTimeout(() => {
+                document.getElementById('banner-top').classList.add('active');
+            }, 1400);
+
+            setTimeout(() => {
+                document.getElementById('notice-main').classList.add('active');
+            }, 2200);
+        }
+    </script>
+</body>
+</html>
